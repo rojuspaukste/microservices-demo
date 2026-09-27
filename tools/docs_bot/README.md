@@ -33,7 +33,7 @@ flowchart TD
 | --- | --- | --- |
 | `[extracted]` with `<!-- docs-bot:begin/end NAME -->` | script | Regenerates the `configuration` and `api` tables and commits them |
 | `[LLM, cited]` | LLM, reviewed by a human | Only proposes a new version, in the PR comment |
-| `[owner]` | human | Never touched |
+| `[owner]` | human | Never touched; given to the LLM as read-only context so drafts don't contradict known caveats |
 
 `<!-- docs-bot:meta source-commit=SHA -->` records the commit the facts were taken from. A pure line
 shift is not a change: the configuration table is only rewritten when a (name, default, manifest value)

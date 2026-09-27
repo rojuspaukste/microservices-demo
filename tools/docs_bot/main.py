@@ -51,8 +51,9 @@ def check(comp: config.Component, cfg: config.Config, base: str, head: str, run:
     numbered = gitutil.number_lines(code_diff)
     if len(numbered) > cfg.max_diff_chars:
         numbered = numbered[:cfg.max_diff_chars] + "\n[diff truncated]"
-    sections = docfile.llm_sections(doc)
-    prompt = llm.build_prompt(comp.name, numbered, sections, docfile.fact_changes(base_facts, head_facts, blocks))
+    sections = docfile.sections(doc, docfile.LLM_TAG)
+    prompt = llm.build_prompt(comp.name, numbered, sections, docfile.fact_changes(base_facts, head_facts, blocks),
+                              owner=docfile.sections(doc, docfile.OWNER_TAG))
     res = llm.analyse(prompt, os.environ.get(cfg.model_env), os.environ.get("GEMINI_API_KEY"))
     rep.llm_calls = 1 if res.attempts else 0
     run.llm_called |= bool(res.attempts)

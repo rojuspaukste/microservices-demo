@@ -9,7 +9,7 @@ from datetime import date
 from .extract import Facts
 
 NONE = "—"
-LLM_SECTION = re.compile(r"^## ([^\n]+?) \[LLM, cited\][ \t]*\n(.*?)(?=^## |\Z)", re.S | re.M)
+LLM_TAG, OWNER_TAG = "LLM, cited", "owner"
 
 
 def _block_re(name: str) -> re.Pattern:
@@ -33,9 +33,10 @@ def set_meta(text: str, sha: str) -> str:
     return re.sub(r"last verified \d{4}-\d{2}-\d{2}", f"last verified {date.today().isoformat()}", text)
 
 
-def llm_sections(text: str) -> dict[str, str]:
-    """Body of every `## Title [LLM, cited]` section, keyed by title."""
-    return {m.group(1): m.group(2).strip() for m in LLM_SECTION.finditer(text)}
+def sections(text: str, tag: str) -> dict[str, str]:
+    """Body of every `## Title [tag]` section, keyed by title."""
+    pattern = re.compile(rf"^## ([^\n]+?) \[{re.escape(tag)}\][ \t]*\n(.*?)(?=^## |\Z)", re.S | re.M)
+    return {m.group(1): m.group(2).strip() for m in pattern.finditer(text)}
 
 
 def _cell(value: str | None) -> str:

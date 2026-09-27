@@ -88,7 +88,8 @@ def test_pr1_commits_facts_and_asks_about_behaviour(repo, monkeypatch, capsys, p
     doc = git(origin, "show", f"pr1:{component.doc}")
     assert "| `MAX_RECOMMENDATIONS` | `5` | `5` | `recommendation_server.py:71` |" in doc
     assert f"source-commit={head[:7]}" in doc
-    assert docfile.llm_sections(doc) == docfile.llm_sections(pr1_files[component.doc])  # prose is never committed
+    for tag in (docfile.LLM_TAG, docfile.OWNER_TAG):  # prose is never committed
+        assert docfile.sections(doc, tag) == docfile.sections(pr1_files[component.doc], tag)
 
     out = capsys.readouterr().out
     assert out.count(github.MARKER) == 1
@@ -98,6 +99,8 @@ def test_pr1_commits_facts_and_asks_about_behaviour(repo, monkeypatch, capsys, p
         assert text in out
     assert "Gotchas" not in out  # owner sections are never drafted
     assert "   79 +        rng = random.Random(request.user_id)" in prompts[0]  # head line numbers for citing
+    assert "## Owner notes (read-only context)\n### Gotchas & history\n" in prompts[0]
+    assert "Result order is not reproducible" in prompts[0]
     rec = record()
     assert rec["action"] == "commit+ask" and rec["factual_update_committed"] is True
     assert (rec["claims_total"], rec["claims_dropped"], rec["tokens"]) == (3, 0, 100)

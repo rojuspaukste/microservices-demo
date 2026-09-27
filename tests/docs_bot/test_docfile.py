@@ -48,11 +48,15 @@ def test_changed_and_removed_values_are_described(component, base_files):
     ]
 
 
-def test_llm_sections_only_returns_llm_tagged_sections(component, base_files):
-    sections = docfile.llm_sections(base_files[component.doc])
+def test_sections_are_selected_by_tag(component, base_files):
+    doc = base_files[component.doc]
+    sections = docfile.sections(doc, docfile.LLM_TAG)
     assert list(sections) == ["What it does", "How it works"]
     assert sections["How it works"].startswith("1. Calls `ListProducts`")
     assert "Gotchas" not in sections["How it works"]
+    owner = docfile.sections(doc, docfile.OWNER_TAG)
+    assert list(owner) == ["Gotchas & history"]
+    assert "Result order is not reproducible" in owner["Gotchas & history"]
 
 
 def test_set_meta_updates_sha_and_visible_line(component, base_files):

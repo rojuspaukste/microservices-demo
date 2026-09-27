@@ -76,6 +76,9 @@ def test_normalise_is_strict_about_booleans_and_shapes():
 
 
 def test_prompt_contains_inputs():
-    prompt = llm.build_prompt("svc", "  71 +x = 1", {"How it works": "body"}, ["Configuration: added `X`"])
+    prompt = llm.build_prompt("svc", "  71 +x = 1", {"How it works": "body"}, ["Configuration: added `X`"],
+                              owner={"Gotchas": "not reproducible"})
     assert "`svc`" in prompt and "  71 +x = 1" in prompt and "### How it works\nbody" in prompt
     assert "- Configuration: added `X`" in prompt and '"claims"' in prompt
+    assert "## Owner notes (read-only context)\n### Gotchas\nnot reproducible" in prompt
+    assert "## Owner notes (read-only context)\n(none)" in llm.build_prompt("svc", "d", {}, [])

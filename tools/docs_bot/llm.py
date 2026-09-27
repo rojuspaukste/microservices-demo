@@ -24,13 +24,18 @@ Rules:
 - Every sentence in a draft must contain a citation, and every citation must match an entry in "claims".
 - In each claim, put the identifiers it is about in backticks. "lines" is [first, last] in the head file.
 - Draft only the sections in affected_sections: the full replacement body (no heading), same style and length.
+- The owner notes are human-written caveats. Never draft them, and never contradict them: do not claim a
+  guarantee (e.g. stable or reproducible results) that an owner note rules out.
 - If nothing needs to change, return behaviour_change false with empty affected_sections, draft and claims.
 
 Respond with JSON only, in this shape:
 {schema}
 
-## Current documentation
+## Current documentation (the sections you may draft)
 {sections}
+
+## Owner notes (read-only context)
+{owner}
 
 ## Fact changes in this PR (context only; already handled by scripts)
 {facts}
@@ -49,10 +54,14 @@ class LLMResult:
     tokens: int | None = None
 
 
-def build_prompt(component: str, diff: str, sections: dict[str, str], facts: list[str]) -> str:
-    return PROMPT.format(component=component, schema=SCHEMA, diff=diff,
-                         sections="\n\n".join(f"### {k}\n{v}" for k, v in sections.items()),
-                         facts="\n".join(f"- {f}" for f in facts) or "(none)")
+def _as_markdown(sections: dict[str, str]) -> str:
+    return "\n\n".join(f"### {k}\n{v}" for k, v in sections.items()) or "(none)"
+
+
+def build_prompt(component: str, diff: str, sections: dict[str, str], facts: list[str],
+                 owner: dict[str, str] | None = None) -> str:
+    return PROMPT.format(component=component, schema=SCHEMA, diff=diff, sections=_as_markdown(sections),
+                         owner=_as_markdown(owner or {}), facts="\n".join(f"- {f}" for f in facts) or "(none)")
 
 
 def _section(name) -> str:
