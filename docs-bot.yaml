@@ -1,0 +1,13 @@
+# docs-bot: which paths belong to which component, and where its doc lives.
+# See tools/docs_bot/README.md.
+settings:
+  model_env: GEMINI_MODEL          # model id comes from a repo variable, not the code
+  max_diff_chars: 12000            # truncate large diffs before sending to the LLM
+  ignore_globs: ["**/*_pb2*.py", "**/genproto/**", "**/*.md"]
+components:
+  recommendationservice:
+    paths: ["src/recommendationservice/**", "kubernetes-manifests/recommendationservice.yaml"]
+    code_files: ["src/recommendationservice/recommendation_server.py"]
+    manifest: "kubernetes-manifests/recommendationservice.yaml"
+    proto: { file: "protos/demo.proto", service: "RecommendationService" }
+    doc: "docs/components/recommendationservice.md"
