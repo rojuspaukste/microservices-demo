@@ -1,0 +1,50 @@
+# docs-bot (PoC): keeps docs/components/*.md in sync with the code on every PR.
+# Facts are committed by scripts; behaviour changes are asked about in a comment.
+# See tools/docs_bot/README.md.
+name: "Docs check"
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "src/**"
+      - "kubernetes-manifests/**"
+      - "protos/**"
+
+permissions:
+  contents: write        # commit fact updates to the PR branch
+  pull-requests: write   # sticky comment
+
+concurrency:
+  group: docs-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  docs-check:
+    # Same-repo PRs only: PRs from forks get a read-only token and no secrets.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install docs-bot
+        continue-on-error: true  # fail open
+        run: pip install -r tools/docs_bot/requirements.txt
+      - name: Check docs
+        continue-on-error: true  # fail open: the bot never blocks a merge
+        run: python -m tools.docs_bot.main
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload run record
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-bot-run
+          path: docs-bot-run.json

@@ -49,3 +49,7 @@ This workflow is manually triggered via the `workflow_dispatch` event to automat
 4. Packages and pushes the Helm chart.
 5. Branches and tags the repository.
 6. Opens a new Pull Request targeting `main` with the release checklist.
+
+### Docs Check - [docs-check.yml](docs-check.yml)
+
+This workflow runs docs-bot on every pull request that touches `src/`, `kubernetes-manifests/` or `protos/`. It commits fact updates (env vars, RPCs) to the component docs in `docs/components/` and asks the PR author about behaviour changes in a single sticky comment. It never fails the check. See [tools/docs_bot/README.md](../../tools/docs_bot/README.md).
