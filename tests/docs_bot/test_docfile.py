@@ -59,6 +59,14 @@ def test_sections_are_selected_by_tag(component, base_files):
     assert "Result order is not reproducible" in owner["Gotchas & history"]
 
 
+def test_replace_section_only_swaps_that_body(component, base_files):
+    doc = base_files[component.doc]
+    new = docfile.replace_section(doc, docfile.LLM_TAG, "How it works", "1. New step (x.py:1).\n")
+    assert docfile.sections(new, docfile.LLM_TAG)["How it works"] == "1. New step (x.py:1)."
+    assert "## How it works [LLM, cited]\n\n1. New step (x.py:1).\n\n## Gotchas & history [owner]" in new
+    assert new.replace("1. New step (x.py:1).", docfile.sections(doc, docfile.LLM_TAG)["How it works"]) == doc
+
+
 def test_set_meta_updates_sha_and_visible_line(component, base_files):
     doc = docfile.set_meta(base_files[component.doc], "abcdef1234567890")
     assert "<!-- docs-bot:meta source-commit=abcdef1 -->" in doc

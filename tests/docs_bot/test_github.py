@@ -1,3 +1,5 @@
+import base64
+
 from tools.docs_bot import github
 
 
@@ -52,6 +54,44 @@ def test_does_not_create_when_create_is_false(monkeypatch):
     monkeypatch.setattr(github, "_session", lambda token: s)
     assert github.upsert_comment("me/demo", 7, "all good", "token", create=False) is None
     assert s.sent == [("GET", "https://api.github.com/repos/me/demo/issues/7/comments?per_page=100")]
+
+
+class ApiSession:
+    def __init__(self, response):
+        self.response, self.calls = response, []
+
+    def request(self, method, url, timeout, **kwargs):
+        self.calls.append((method, url, kwargs))
+        return Resp(self.response)
+
+
+def test_files_are_read_and_committed_through_the_contents_api(monkeypatch):
+    text = "# doc — ünïcode\n| `X` | — |\n"
+    encoded = base64.b64encode(text.encode("utf-8")).decode("ascii")
+    s = ApiSession({"content": encoded[:10] + "\n" + encoded[10:], "sha": "blob1"})  # GitHub wraps base64
+    monkeypatch.setattr(github, "_session", lambda token: s)
+    assert github.get_file("me/demo", "docs/x.md", "feature", "t") == (text, "blob1")
+    assert s.calls[-1] == ("GET", "https://api.github.com/repos/me/demo/contents/docs/x.md", {"params": {"ref": "feature"}})
+
+    s.response = {"commit": {"sha": "c0ffee"}}
+    assert github.put_file("me/demo", "docs/x.md", "feature", text, "blob1", "msg", "t") == "c0ffee"
+    method, url, kwargs = s.calls[-1]
+    payload = kwargs["json"]
+    assert (method, url) == ("PUT", "https://api.github.com/repos/me/demo/contents/docs/x.md")
+    assert (payload["branch"], payload["sha"], payload["message"], payload["committer"]) == \
+        ("feature", "blob1", "msg", github.BOT)
+    assert base64.b64decode(payload["content"]).decode("utf-8") == text
+
+
+def test_permission_and_comment_update_hit_the_right_urls(monkeypatch):
+    s = ApiSession({"permission": "admin"})
+    monkeypatch.setattr(github, "_session", lambda token: s)
+    assert github.permission("me/demo", "rojus", "t") == "admin"
+    github.update_comment("https://api.github.com/repos/me/demo/issues/comments/9", "new", "t")
+    assert [c[:2] for c in s.calls] == [
+        ("GET", "https://api.github.com/repos/me/demo/collaborators/rojus/permission"),
+        ("PATCH", "https://api.github.com/repos/me/demo/issues/comments/9")]
+    assert s.calls[-1][2] == {"json": {"body": "new"}}
 
 
 def test_without_a_token_the_comment_is_printed(capsys):

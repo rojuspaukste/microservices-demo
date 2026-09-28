@@ -3,8 +3,9 @@
 A GitHub Action that runs on every pull request and checks whether the change makes a component's
 documentation outdated. **Facts** (env vars, defaults, manifest values, RPCs) are extracted by scripts
 and committed to the PR branch automatically. **Behaviour** changes are interpreted by one LLM call, but its
-prose is never committed: it is posted as a question for the PR author, with a draft whose citations
-have been checked against the code.
+prose is never committed on its own: it is posted as a question for the PR author, with a draft whose
+citations have been checked against the code, and an **Apply these drafts** checkbox. Ticking the box is the
+human approval: a second workflow (`docs-apply.yml`) then commits exactly the drafts shown in the comment.
 
 ```mermaid
 flowchart TD
@@ -23,6 +24,7 @@ flowchart TD
   E -- no --> K{"anything to report?"}
   I -- "no change" --> K
   K -- no --> Z
+  J -. "author ticks 'Apply these drafts'" .-> L["docs-apply.yml: check write access, commit the drafts as docs-bot"]
 ```
 
 ## Doc format
@@ -32,7 +34,7 @@ flowchart TD
 | Tag | Owner | What the bot does |
 | --- | --- | --- |
 | `[extracted]` with `<!-- docs-bot:begin/end NAME -->` | script | Regenerates the `configuration` and `api` tables and commits them |
-| `[LLM, cited]` | LLM, reviewed by a human | Only proposes a new version, in the PR comment |
+| `[LLM, cited]` | LLM, approved by a human | Proposes a new version in the PR comment; commits it only when someone with write access ticks **Apply these drafts** |
 | `[owner]` | human | Never touched; given to the LLM as read-only context so drafts don't contradict known caveats |
 
 `<!-- docs-bot:meta source-commit=SHA -->` records the commit the facts were taken from. A pure line
@@ -88,11 +90,15 @@ Across runs these give precision (how often the bot asked and was right), cost (
 - **No noise.** One comment per PR, updated in place. The bot never comments just to say all is well
   (it only refreshes an existing comment).
 - **Loops.** Pushes made with `GITHUB_TOKEN` don't trigger workflows, and commits tagged `[docs-bot]` are skipped anyway.
+- **Applying drafts.** `docs-apply.yml` runs the bot code from the default branch and never checks out PR code.
+  It only acts when a person with write access ticks the box, only writes `[LLM, cited]` sections, and
+  replaces the box with "✅ Drafts applied in SHA" so it can't apply twice. If the commit fails, the box is
+  unticked again with the reason, so it can be retried.
 
 ## Future improvements
 
 - tree-sitter instead of regex, so more languages than Python (Go, C#, Node, Java in this repo) can be covered.
 - "Where it fits" generated from the cross-repo call graph.
-- GitHub suggestion blocks, so a draft can be applied with one click.
+- Re-run the behaviour check when only the doc changes, so the comment resolves itself after a manual edit.
 - An eval set of labelled historical PRs, to measure precision and recall of the behaviour check.
 - Run inside the org-wide GitHub App instead of a per-repo Action.

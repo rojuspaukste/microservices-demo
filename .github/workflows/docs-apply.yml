@@ -1,0 +1,40 @@
+# docs-bot (PoC): when a person ticks "Apply these drafts" in the docs-bot PR comment, commit the
+# LLM drafts shown in that comment to the PR branch. LLM prose never lands without this explicit
+# approval. See tools/docs_bot/README.md.
+name: "Docs apply"
+on:
+  issue_comment:
+    types: [edited]
+
+permissions:
+  contents: write        # commit the approved drafts to the PR branch
+  pull-requests: write   # update the docs-bot comment
+
+concurrency:
+  group: docs-apply-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    # Only edits made by a person to the docs-bot comment on a PR (ticking a box is an edit).
+    if: >-
+      github.event.issue.pull_request &&
+      github.event.sender.type == 'User' &&
+      contains(github.event.comment.body, '<!-- docs-bot:apply ')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # issue_comment runs on the default branch: this is the bot's code, never the PR's.
+      # The PR's doc is read and written through the GitHub API, not checked out.
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install docs-bot
+        continue-on-error: true  # fail open
+        run: pip install -r tools/docs_bot/requirements.txt
+      - name: Apply approved drafts
+        continue-on-error: true  # fail open
+        run: python -m tools.docs_bot.apply
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

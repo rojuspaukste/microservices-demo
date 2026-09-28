@@ -53,3 +53,7 @@ This workflow is manually triggered via the `workflow_dispatch` event to automat
 ### Docs Check - [docs-check.yml](docs-check.yml)
 
 This workflow runs docs-bot on every pull request that touches `src/`, `kubernetes-manifests/` or `protos/`. It commits fact updates (env vars, RPCs) to the component docs in `docs/components/` and asks the PR author about behaviour changes in a single sticky comment. It never fails the check. See [tools/docs_bot/README.md](../../tools/docs_bot/README.md).
+
+### Docs Apply - [docs-apply.yml](docs-apply.yml)
+
+This workflow runs when someone with write access ticks **Apply these drafts** in the docs-bot comment. It commits the LLM-written drafts shown in that comment to the PR's doc. It runs the bot code from `main` and never checks out PR code.

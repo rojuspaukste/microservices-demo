@@ -95,7 +95,7 @@ def test_pr1_commits_facts_and_asks_about_behaviour(repo, monkeypatch, capsys, p
     assert out.count(github.MARKER) == 1
     for text in ["- Configuration: added `MAX_RECOMMENDATIONS` (default `5`, manifest `5`) → committed in",
                  "**Question:** Why was this change made", 'Suggested draft for "How it works" (3/3 cited claims verified)',
-                 "_Confidence: high · 1 LLM call"]:
+                 "_Confidence: high · 1 LLM call", "- [ ] **Apply these drafts** to the doc"]:
         assert text in out
     assert "Gotchas" not in out  # owner sections are never drafted
     assert "   79 +        rng = random.Random(request.user_id)" in prompts[0]  # head line numbers for citing

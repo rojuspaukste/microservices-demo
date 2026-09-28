@@ -33,10 +33,19 @@ def set_meta(text: str, sha: str) -> str:
     return re.sub(r"last verified \d{4}-\d{2}-\d{2}", f"last verified {date.today().isoformat()}", text)
 
 
+def _section_re(tag: str, title: str = r"[^\n]+?") -> re.Pattern:
+    return re.compile(rf"^(## ({title}) \[{re.escape(tag)}\][ \t]*\n)(.*?)(?=^## |\Z)", re.S | re.M)
+
+
 def sections(text: str, tag: str) -> dict[str, str]:
     """Body of every `## Title [tag]` section, keyed by title."""
-    pattern = re.compile(rf"^## ([^\n]+?) \[{re.escape(tag)}\][ \t]*\n(.*?)(?=^## |\Z)", re.S | re.M)
-    return {m.group(1): m.group(2).strip() for m in pattern.finditer(text)}
+    return {m.group(2): m.group(3).strip() for m in _section_re(tag).finditer(text)}
+
+
+def replace_section(text: str, tag: str, title: str, body: str) -> str:
+    """Swap the body of `## title [tag]`, keeping its heading and the blank lines around it."""
+    return _section_re(tag, re.escape(title)).sub(
+        lambda m: f"{m.group(1)}\n{body.strip()}\n" + ("\n" if m.end() < len(m.string) else ""), text, count=1)
 
 
 def _cell(value: str | None) -> str:

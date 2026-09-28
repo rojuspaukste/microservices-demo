@@ -12,7 +12,7 @@ import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import config, docfile, extract, github, gitutil, llm, metrics, verify
+from . import apply, config, docfile, extract, github, gitutil, llm, metrics, verify
 
 BOT_TAG = "[docs-bot]"
 
@@ -96,7 +96,9 @@ def render_comment(reports: list[Report], head: str) -> str | None:
             for section, draft in r.drafts.items():
                 parts += ["", f'<details><summary>Suggested draft for "{section}" '
                               f'({kept}/{r.stats["claims_total"]} cited claims verified)</summary>',
-                          "", "```markdown", draft, "```", "", "</details>"]
+                          "", "````markdown", draft, "````", "", "</details>"]
+            if r.drafts:  # LLM prose only lands in the doc when a person ticks this (see apply.py)
+                parts += ["", apply.checkbox(r.component.name)]
             if a["draft"] and not r.drafts:
                 parts += ["", "_Draft withheld: its citations did not check out against the code._"]
         elif r.llm_error:
