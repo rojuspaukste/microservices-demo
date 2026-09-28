@@ -1,8 +1,28 @@
 <!-- <p align="center">
 <img src="/src/frontend/static/icons/Hipster_HeroLogoMaroon.svg" width="300" alt="Online Boutique" />
 </p> -->
-# Oxylabs take-home: docs-bot. 
-This fork adds a PR documentation checker. Tool: tools/docs_bot/ (see its README). Demo PRs: #1 (both paths: fact commit + author question) and #2 (no doc change → bot stays quiet). Doc: docs/components/recommendationservice.md.
+> ## About this fork
+> Oxylabs take-home: docs-bot (this fork)
+>> This fork adds **docs-bot**, a proof-of-concept PR tool that keeps component documentation in sync with the code.
+> On every pull request it **commits factual doc updates itself** (env vars, APIs) and **asks the author** about behaviour
+> changes, with an LLM-drafted, citation-checked suggestion that is applied only when a person ticks a box.
+>
+> **See it in action**
+> - [PR #1: configurable count + personalise by user](https://github.com/rojuspaukste/microservices-demo/pull/1): fact commit + author question + approved draft
+> - [PR #2: tidy logging](https://github.com/rojuspaukste/microservices-demo/pull/2): no doc impact, so the bot stays quiet
+>
+> **Where things are**
+> - [`tools/docs_bot/README.md`](tools/docs_bot/README.md): how it works, metrics, failure behaviour, future improvements
+> - [`tools/docs_bot/`](tools/docs_bot/): the bot ([`main.py`](tools/docs_bot/main.py) checks a PR, [`apply.py`](tools/docs_bot/apply.py) applies approved drafts)
+> - [`.github/workflows/docs-check.yml`](.github/workflows/docs-check.yml) and [`docs-apply.yml`](.github/workflows/docs-apply.yml): the GitHub Actions
+> - [`docs-bot.yaml`](docs-bot.yaml): which code paths belong to which documented component
+> - [`docs/components/recommendationservice.md`](docs/components/recommendationservice.md): the maintained doc
+> - [`tests/docs_bot/`](tests/docs_bot/): tests (50, no network)
+> - [`BUILD_BRIEF.md`](BUILD_BRIEF.md): the design brief the tool was built from
+>
+> Everything below this box is the original Online Boutique README.
+
+---
 
 ![Continuous Integration](https://github.com/GoogleCloudPlatform/microservices-demo/workflows/Continuous%20Integration%20-%20Main/Release/badge.svg)
 
