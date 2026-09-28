@@ -5,7 +5,7 @@
 
 ## What it does [LLM, cited]
 
-Returns up to 5 product IDs for the "you might also like" sections of the product page, cart and order confirmation. There is no real recommendation logic: it fetches the whole catalog, removes the products the caller sent, and picks the rest at random (`recommendation_server.py:70-86`). `user_id` is accepted but ignored, so results are neither personalised nor stable between calls.
+Returns up to 5 product IDs for the "you might also like" sections of the product page, cart and order confirmation (`recommendation_server.py:70-87`). There is no real recommendation logic: it fetches the whole catalog, removes the products the caller sent, and picks the rest using `random.Random` seeded by `request.user_id` (`recommendation_server.py:73-82`).
 
 ## Where it fits [extracted]
 
@@ -52,7 +52,7 @@ Needs a reachable `productcatalogservice`, otherwise every request fails. Contai
 
 1. Calls `ListProducts` on the product catalog for every request, with no cache (`recommendation_server.py:73`).
 2. Removes the product IDs sent by the caller from the catalog (`recommendation_server.py:75`).
-3. Returns a random sample of at most 5 of the remaining products (`recommendation_server.py:77-81`).
+3. Returns a sample of the remaining products using `random.Random` seeded with `request.user_id` (`recommendation_server.py:77-82`).
 
 ## Gotchas & history [owner]
 
