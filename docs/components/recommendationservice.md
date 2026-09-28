@@ -1,11 +1,11 @@
 # recommendationservice
 
-<!-- docs-bot:meta source-commit=38e7348 -->
-> Generated from commit `38e7348` · last verified 2026-09-28 · owner: repo-wide team (see Owners) · status: draft
+<!-- docs-bot:meta source-commit=e18c1ea -->
+> Generated from commit `e18c1ea` · last verified 2026-09-28 · owner: repo-wide team (see Owners) · status: draft
 
 ## What it does [LLM, cited]
 
-Returns up to 5 product IDs for the "you might also like" sections of the product page, cart and order confirmation. There is no real recommendation logic: it fetches the whole catalog, removes the products the caller sent, and picks the rest at random (`recommendation_server.py:70-86`). `user_id` is accepted but ignored, so results are neither personalised nor stable between calls.
+Returns up to 5 product IDs for the "you might also like" sections of the product page, cart and order confirmation (`recommendation_server.py:70-87`). There is no real recommendation logic: it fetches the whole catalog, removes the products the caller sent, and picks the rest using `random.Random` seeded by `request.user_id` (`recommendation_server.py:73-82`).
 
 ## Where it fits [extracted]
 
@@ -28,12 +28,13 @@ Defined in `protos/demo.proto` (service `RecommendationService`). `product_ids` 
 <!-- docs-bot:begin configuration -->
 | Env var | Default in code | Manifest value | Read at |
 | --- | --- | --- | --- |
-| `COLLECTOR_SERVICE_ADDR` | `localhost:4317` | — | `recommendation_server.py:116` |
-| `DISABLE_PROFILER` | — (presence check) | `1` | `recommendation_server.py:101` |
-| `ENABLE_TRACING` | — | — | `recommendation_server.py:114` |
+| `COLLECTOR_SERVICE_ADDR` | `localhost:4317` | — | `recommendation_server.py:117` |
+| `DISABLE_PROFILER` | — (presence check) | `1` | `recommendation_server.py:102` |
+| `ENABLE_TRACING` | — | — | `recommendation_server.py:115` |
 | `GCP_PROJECT_ID` | — | — | `recommendation_server.py:46` |
-| `PORT` | `8080` | `8080` | `recommendation_server.py:130` |
-| `PRODUCT_CATALOG_SERVICE_ADDR` | `''` | `productcatalogservice:3550` | `recommendation_server.py:131` |
+| `MAX_RECOMMENDATIONS` | `5` | `5` | `recommendation_server.py:71` |
+| `PORT` | `8080` | `8080` | `recommendation_server.py:131` |
+| `PRODUCT_CATALOG_SERVICE_ADDR` | `''` | `productcatalogservice:3550` | `recommendation_server.py:132` |
 <!-- docs-bot:end configuration -->
 
 ## Run & test locally [extracted + LLM]
@@ -51,7 +52,7 @@ Needs a reachable `productcatalogservice`, otherwise every request fails. Contai
 
 1. Calls `ListProducts` on the product catalog for every request, with no cache (`recommendation_server.py:73`).
 2. Removes the product IDs sent by the caller from the catalog (`recommendation_server.py:75`).
-3. Returns a random sample of at most 5 of the remaining products (`recommendation_server.py:77-81`).
+3. Returns a sample of the remaining products using `random.Random` seeded with `request.user_id` (`recommendation_server.py:77-82`).
 
 ## Gotchas & history [owner]
 
