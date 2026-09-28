@@ -1,7 +1,7 @@
 # recommendationservice
 
-<!-- docs-bot:meta source-commit=38e7348 -->
-> Generated from commit `38e7348` · last verified 2026-09-28 · owner: repo-wide team (see Owners) · status: draft
+<!-- docs-bot:meta source-commit=e18c1ea -->
+> Generated from commit `e18c1ea` · last verified 2026-09-28 · owner: repo-wide team (see Owners) · status: draft
 
 ## What it does [LLM, cited]
 
@@ -28,12 +28,13 @@ Defined in `protos/demo.proto` (service `RecommendationService`). `product_ids` 
 <!-- docs-bot:begin configuration -->
 | Env var | Default in code | Manifest value | Read at |
 | --- | --- | --- | --- |
-| `COLLECTOR_SERVICE_ADDR` | `localhost:4317` | — | `recommendation_server.py:116` |
-| `DISABLE_PROFILER` | — (presence check) | `1` | `recommendation_server.py:101` |
-| `ENABLE_TRACING` | — | — | `recommendation_server.py:114` |
+| `COLLECTOR_SERVICE_ADDR` | `localhost:4317` | — | `recommendation_server.py:117` |
+| `DISABLE_PROFILER` | — (presence check) | `1` | `recommendation_server.py:102` |
+| `ENABLE_TRACING` | — | — | `recommendation_server.py:115` |
 | `GCP_PROJECT_ID` | — | — | `recommendation_server.py:46` |
-| `PORT` | `8080` | `8080` | `recommendation_server.py:130` |
-| `PRODUCT_CATALOG_SERVICE_ADDR` | `''` | `productcatalogservice:3550` | `recommendation_server.py:131` |
+| `MAX_RECOMMENDATIONS` | `5` | `5` | `recommendation_server.py:71` |
+| `PORT` | `8080` | `8080` | `recommendation_server.py:131` |
+| `PRODUCT_CATALOG_SERVICE_ADDR` | `''` | `productcatalogservice:3550` | `recommendation_server.py:132` |
 <!-- docs-bot:end configuration -->
 
 ## Run & test locally [extracted + LLM]
