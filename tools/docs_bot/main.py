@@ -100,7 +100,7 @@ def render_comment(reports: list[Report], head: str) -> str | None:
             if a["draft"] and not r.drafts:
                 parts += ["", "_Draft withheld: its citations did not check out against the code._"]
         elif r.llm_error:
-            parts += ["", "_Behaviour check skipped (LLM unavailable)._"]
+            parts += ["", f"_Behaviour check skipped (LLM unavailable: {llm.short_reason(r.llm_error)})._"]
         confidence = f"Confidence: {r.analysis['confidence']} · " if r.asks else ""
         calls = f"{r.llm_calls} LLM call" + ("" if r.llm_calls == 1 else "s")
         parts += ["", f"_{confidence}{calls} · checked `{head[:7]}` · docs-bot PoC_", ""]
@@ -143,7 +143,7 @@ def execute(run: metrics.Run, ctx: dict) -> None:
     if body := render_comment(reports, head):
         github.upsert_comment(ctx["repo"], run.pr, body, token)
     else:
-        skipped = " Behaviour check skipped (LLM unavailable)." if run.llm_error else ""
+        skipped = f" Behaviour check skipped (LLM unavailable: {llm.short_reason(run.llm_error)})." if run.llm_error else ""
         run.note = "No doc change needed." + skipped
         # Only refresh a comment left by an earlier run; never open a new one just to say "all good".
         github.upsert_comment(ctx["repo"], run.pr, f"{github.MARKER}\n✅ docs-bot: docs are in sync as of "

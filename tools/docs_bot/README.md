@@ -79,8 +79,9 @@ Across runs these give precision (how often the bot asked and was right), cost (
 
 - **Fail open.** Any error sets `action: skipped` and updates the sticky comment to "docs check skipped",
   and the job still succeeds. The workflow steps are also `continue-on-error`.
-- **LLM down or no key.** 429/5xx are retried 3 times with exponential backoff. After that the factual update
-  is still committed, and the comment says the behaviour check was skipped.
+- **LLM down or no key.** 429/5xx get 3 attempts, waiting 5 s then 15 s, or as long as Gemini's RetryInfo asks
+  on a 429 (capped at 60 s). After that the factual update is still committed, and the comment says the
+  behaviour check was skipped and why (e.g. `503 UNAVAILABLE`).
 - **Hallucinations.** A claim is dropped unless its file exists, its lines are in range and the cited lines ±2
   contain one of its identifiers. Draft sentences that cite a dropped claim, cite nothing, or mention an env var
   or port the facts don't know about are removed. If more than half of the claims fail, the whole draft is withheld.

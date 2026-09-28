@@ -121,7 +121,7 @@ def test_without_llm_key_facts_are_still_committed(repo, monkeypatch, capsys, pr
     open_pr(repo, monkeypatch, "pr1", pr1_files)
     assert main.main() == 0
     assert "MAX_RECOMMENDATIONS" in git(repo.parent / "origin.git", "show", f"pr1:{component.doc}")
-    assert "_Behaviour check skipped (LLM unavailable)._" in capsys.readouterr().out
+    assert "_Behaviour check skipped (LLM unavailable: GEMINI_API_KEY or model id not set)._" in capsys.readouterr().out
     rec = record()
     assert (rec["action"], rec["llm_called"]) == ("commit", False) and "not set" in rec["llm_error"]
 

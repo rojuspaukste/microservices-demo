@@ -9,8 +9,9 @@ ANSWER = {"behaviour_change": True, "confidence": "high", "affected_sections": [
           "summary": "s", "question_for_author": "q", "draft": {"How it works": "d"}, "claims": []}
 
 
-def api_error(code: int) -> errors.APIError:
-    return errors.APIError(code, {"error": {"code": code, "message": "boom", "status": "X"}})
+def api_error(code: int, retry_delay: str | None = None) -> errors.APIError:
+    details = [{"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": retry_delay}] if retry_delay else []
+    return errors.APIError(code, {"error": {"code": code, "message": "boom", "status": "X", "details": details}})
 
 
 class FakeClient:
@@ -45,13 +46,19 @@ def test_success_returns_normalised_json_and_usage():
 def test_retries_429_and_5xx_with_backoff():
     res, sleeps = run(FakeClient(api_error(429), api_error(503), json.dumps(ANSWER)))
     assert res.data["behaviour_change"] is True
-    assert res.attempts == 3 and sleeps == [2, 4]
+    assert res.attempts == 3 and sleeps == [5, 15]
+
+
+def test_waits_as_long_as_gemini_asks_capped_at_a_minute():
+    res, sleeps = run(FakeClient(api_error(429, "32s"), api_error(429, "300s"), json.dumps(ANSWER)))
+    assert res.data is not None and sleeps == [32, 60]
 
 
 def test_gives_up_after_three_attempts():
-    res, sleeps = run(FakeClient(api_error(429), api_error(429), api_error(429)))
-    assert res.data is None and "429" in res.error
-    assert res.attempts == 3 and sleeps == [2, 4]
+    res, sleeps = run(FakeClient(api_error(503), api_error(503), api_error(503)))
+    assert res.data is None and "503" in res.error
+    assert res.attempts == 3 and sleeps == [5, 15]
+    assert llm.short_reason(res.error) == "APIError: 503 X"
 
 
 def test_client_errors_are_not_retried():

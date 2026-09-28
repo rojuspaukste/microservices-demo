@@ -1,7 +1,11 @@
 """One Gemini call per component: JSON out, temperature 0, retries on 429/5xx. Never raises."""
 import json
+import re
 import time
 from dataclasses import dataclass
+
+MAX_WAIT_S = 60
+RETRY_DELAY = re.compile(r"""["']retryDelay["']:\s*["'](\d+(?:\.\d+)?)s["']""")
 
 SCHEMA = """{
   "behaviour_change": true,
@@ -84,6 +88,17 @@ def normalise(data) -> dict:
     }
 
 
+def wait_s(error, attempt: int) -> float:
+    """The delay Gemini asks for (RetryInfo on 429s), else 5 s, 15 s, ...; capped at a minute."""
+    m = RETRY_DELAY.search(str(getattr(error, "details", "")))
+    return min(float(m.group(1)) if m else 5 * 3 ** (attempt - 1), MAX_WAIT_S)
+
+
+def short_reason(error: str) -> str:
+    """'ServerError: 503 UNAVAILABLE. {...}' -> 'ServerError: 503 UNAVAILABLE'."""
+    return error.split(". ")[0][:100]
+
+
 def analyse(prompt: str, model: str | None, api_key: str | None, client=None,
             attempts: int = 3, sleep=time.sleep) -> LLMResult:
     res = LLMResult()
@@ -104,7 +119,7 @@ def analyse(prompt: str, model: str | None, api_key: str | None, client=None,
             except errors.APIError as e:
                 if res.attempts >= attempts or not (e.code == 429 or e.code >= 500):
                     raise
-                sleep(2 ** res.attempts)
+                sleep(wait_s(e, res.attempts))
         res.data = normalise(json.loads(response.text))
         usage = getattr(response, "usage_metadata", None)
         res.tokens = getattr(usage, "total_token_count", None)
